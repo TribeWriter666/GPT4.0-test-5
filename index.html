@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Image Glitching</title>
+  </head>
+  <body>
+    <input type="file" id="input" accept="image/*">
+    <canvas id="canvas"></canvas>
+    <script>
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      let imageData = null;
+      let originalData = null;
+      let glitched = new Array(0);
+
+      const input = document.getElementById('input');
+      input.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = function() {
+            // Create a new canvas with the same dimensions as the image
+            canvas.width = img.width;
+            canvas.height = img.height;
+
+            // Draw the original image to the canvas
+            ctx.drawImage(img, 0, 0);
+
+            // Get the raw binary data of the image
+            imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            originalData = new Uint8ClampedArray(imageData.data);
+            glitched = new Array(imageData.data.length).fill(false);
+
+            // Start glitching the image data at an interval
+            setInterval(function() {
+              glitchImageData(imageData, originalData, glitched);
+              ctx.putImageData(imageData, 0, 0);
+            }, 100);
+          };
+        };
+        reader.readAsDataURL(file);
+      });
+
+      function glitchImageData(imageData, originalData, glitched) {
+        const data = imageData.data;
+
+        // Glitch the image by inserting random data into its binary code
+        for (let i = 0; i < data.length; i++) {
+          if (Math.random() < 0.05 && data[i] === originalData[i] && !glitched[i]) {
+            data[i] = Math.floor(Math.random() * 255);
+            glitched[i] = true;
+          }
+        }
+
+        // Revert glitched pixels back to their original state if they haven't been glitched again
+        for (let i = 0; i < data.length; i++) {
+          if (glitched[i] && data[i] === originalData[i]) {
+            glitched[i] = false;
+          }
+        }
+      }
+    </script>
+  </body>
+</html>
